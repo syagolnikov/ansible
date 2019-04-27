@@ -1,0 +1,95 @@
+- name: Break down master
+  become: yes
+  become_method: sudo
+  shell: kubeadm reset -f
+
+- name: Installing packages
+  become: yes
+  become_method: sudo
+  apt: pkg={{ item }} state=latest update_cache=yes
+  with_items: "{{ packages }}"
+
+- name: Download docker gpg
+  get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /home/ubuntu/docker.gpg
+    mode: 0440
+
+- name: Install docker gpg key
+  become: yes
+  become_method: sudo
+  shell: "apt-key add - < /home/ubuntu/docker.gpg"
+
+- name: Disable swap
+  become: yes
+  become_method: sudo
+  shell: "swapoff -a"
+
+- name: Comment swap in fstab
+  become: yes
+  become_method: sudo
+  shell: sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+- name: Add URL k8s to repo list
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+    state: present
+    update_cache: yes
+
+- name: Copy config template file
+  become: yes
+  become_method: sudo
+  template:
+    src=../files/daemon.json
+    dest=/etc/docker/daemon.json
+    owner=root group=root mode=0644
+
+- name: Mkdir docker.service.d
+  become: yes
+  become_method: sudo
+  shell: mkdir -p /etc/systemd/system/docker.service.d
+
+- name: Restart service systemd
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: docker
+
+- name: Kubeadmin master deploy
+  become: yes
+  become_method: sudo
+  shell: kubeadm init --apiserver-advertise-address {{master_ip | to_json | replace('\n', '') | replace('[', '') | replace(']', '') }}
+
+- name: Capture node install command
+  become: yes
+  become_method: sudo
+  shell: kubeadm token create --print-join-command
+  register: command
+- debug:
+    var: command
+    verbosity: 4
+
+- local_action: copy content='{{ command.stdout }}' dest=/ansible/playbooks/roles/k8s_node/vars/install_command.yml
+
+- name: Create weave directory
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+
+- name: Create Weave config
+  become: yes
+  become_method: sudo
+  shell: "cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config"
+
+- name: Change global
+  become: yes
+  become_method: sudo
+  shell: "chown ubuntu:ubuntu /home/ubuntu/.kube/config"
+
+- pause: seconds=30
+
+- name: Install Weave
+  become: sudo
+  shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+## documentation: https://kubernetes.io/docs/setup/cri/

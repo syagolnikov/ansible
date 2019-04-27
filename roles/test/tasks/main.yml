@@ -1,0 +1,3 @@
+- name: test out the role called test
+  become: sudo
+  shell: echo "test" > /home/ubuntu/test

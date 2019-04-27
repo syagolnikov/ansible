@@ -1,0 +1,10 @@
+- hosts: k8s
+  user: ubuntu
+  become: yes
+
+  vars_files:
+    - roles/k8s_dependencies/vars/vars.yml
+  strategy: free
+
+  roles:
+    - role: k8s_dependencies

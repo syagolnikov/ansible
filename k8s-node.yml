@@ -1,0 +1,9 @@
+- hosts: k8s-remote
+  user: ubuntu
+  become: yes
+  vars:
+      install_command: "{{ lookup('file', './roles/k8s_node/vars/install_command.yml') }}"
+  vars_files:
+    - roles/k8s_node/vars/vars.yml
+  roles:
+    - role: k8s_node

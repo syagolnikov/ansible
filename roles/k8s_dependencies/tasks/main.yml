@@ -1,0 +1,29 @@
+- name: Starting install
+  become: sudo
+  shell: logger "loading K8s dependencies via ansible"
+
+- name: Download gpg
+  shell: "wget https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
+- name: Install gpg key
+  become: yes
+  become_method: sudo
+  shell: "apt-key add - < /home/ubuntu/apt-key.gpg"
+
+- name: Add URL k8s to repo list
+  apt_repository:
+    repo: deb http://packages.cloud.google.com/apt/ kubernetes-xenial main
+    state: present
+    update_cache: yes
+
+- name: Add URL k8s repo list
+  apt_repository:
+    repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+    state: absent
+    update_cache: yes
+
+- name: Installing packages
+  become: yes
+  become_method: sudo
+  apt: pkg={{ item }} state=latest update_cache=yes
+  with_items: "{{ packages }}"

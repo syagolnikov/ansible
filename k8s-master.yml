@@ -1,0 +1,9 @@
+- hosts: k8s-master
+  user: ubuntu
+  become: yes
+
+  vars_files:
+    - roles/k8s_master/vars/vars.yml
+
+  roles:
+    - role: k8s_master
