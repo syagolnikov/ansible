@@ -10,7 +10,7 @@ Official Jeknins documentation:
 
 <br>
 
-## 1. Create ansible-local image on Mac or windows.
+## 1. Create ansible-local image on Mac or windows
 
 ```
 $ cd ansible
@@ -18,7 +18,7 @@ $ docker build -t ansible-local .
 
 ```
 
-## 2. adjust IPs in inventory file to match VM IP's.
+## 2. adjust IPs in inventory file to match VM IP's
 
 ## 3. Deploy K8s cluster via shell script
 
