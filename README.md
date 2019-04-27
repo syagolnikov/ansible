@@ -18,7 +18,7 @@ $ docker build -t ansible-local .
 
 ```
 
-## 2. adjust IPs in inventory file to match VM IP's
+## 2. Adjust IPs in inventory file to match VM IP's
 
 ## 3. Deploy K8s cluster via shell script
 
