@@ -1,7 +1,6 @@
 ## Dockerized ansible deploy of K8s w/Kubeadm
 
 
-Official Jeknins documentation:
 <br>
 
 ## Requirements
