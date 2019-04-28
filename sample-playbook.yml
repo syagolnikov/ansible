@@ -1,27 +1,35 @@
-- hosts: k8s-master
+- hosts: k8s-test
   gather_facts: false
   user: ubuntu
   become: yes
   tasks:
     - raw: logger "serge was here"
-    - raw: echo "test" > /home/ubuntu/test.txt
-    - pause: seconds=2
+    - pause: seconds=1
 
-    - name: Create weave directory
-      file:
-        path: /home/ubuntu/.kube
-        state: directory
-
-    - name: Create Weave config
+    - name: Capture node IP
       become: yes
       become_method: sudo
-      shell: "cp -i /etc/kubernetes/admin.conf /home/ubuntu/.kube/config"
+      shell: ifconfig | grep enp1s0 -A 1 | grep inet | cut -d ':' -f 2 | cut -d ' ' -f 1
+      register: ip
 
-    - name: Change global
+    - name: trim ip
+      shell: echo "{{ip.stdout | to_json | replace('\n', '') | replace('[', '') | replace(']', '')}}"
+      register: ip_trim
+
+    - name: test iP
       become: yes
       become_method: sudo
-      shell: "chown ubuntu:ubuntu /home/ubuntu/.kube/config"
+      shell: logger {{ip_trim}}
 
-    - name: Install Weave
-      become: sudo
-      shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    - name: Set /etc/hostname
+      become: yes
+      become_method: sudo
+      shell: hostnamectl set-hostname node-worker-{{ip_trim.stdout}}
+
+    - lineinfile:
+        destfile: /etc/hosts
+        regexp: '^127\.0\.1\.1'
+        line: "127.0.1.1        node-worker-{{ip_trim.stdout}}"
+        owner: root
+        group: root
+        mode: 0644

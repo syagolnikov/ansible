@@ -1,4 +1,4 @@
-- hosts: k8s-remote
+- hosts: k8s-node
   user: ubuntu
   become: yes
   vars:

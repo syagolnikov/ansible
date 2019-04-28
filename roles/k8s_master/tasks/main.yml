@@ -55,10 +55,20 @@
     daemon_reload: yes
     name: docker
 
+- name: Capture master IP
+  become: yes
+  become_method: sudo
+  shell: ifconfig | grep enp1s0 -A 1 | grep inet | cut -d ':' -f 2 | cut -d ' ' -f 1
+  register: ip
+
+- name: trim ip
+  shell: echo "{{ip.stdout | to_json | replace('\n', '') | replace('[', '') | replace(']', '')}}"
+  register: master_ip
+
 - name: Kubeadmin master deploy
   become: yes
   become_method: sudo
-  shell: kubeadm init --apiserver-advertise-address {{master_ip | to_json | replace('\n', '') | replace('[', '') | replace(']', '') }}
+  shell: kubeadm init --apiserver-advertise-address {{master_ip.stdout}}
 
 - name: Capture node install command
   become: yes

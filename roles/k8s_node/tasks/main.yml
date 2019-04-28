@@ -63,10 +63,22 @@
   shell: ifconfig | grep enp0s3 -A 1 | grep inet | cut -d ':' -f 2 | cut -d ' ' -f 1
   register: ip
 
-- name: Set hostname of node
+- name: trim ip
+  shell: echo "{{ip.stdout | to_json | replace('\n', '') | replace('[', '') | replace(']', '')}}"
+  register: ip_trim
+
+- name: Set /etc/hostname
   become: yes
   become_method: sudo
-  shell: hostnamectl set-hostname node-worker-{{ip.stdout | to_json | replace('\n', '') | replace('[', '') | replace(']', '')}}
+  shell: hostnamectl set-hostname node-worker-{{ip_trim.stdout}}
+
+- lineinfile:
+    destfile: /etc/hosts
+    regexp: '^127\.0\.1\.1'
+    line: "127.0.1.1        node-worker-{{ip_trim.stdout}}"
+    owner: root
+    group: root
+    mode: 0644
 
 - name: Kubeadmin node deploy
   become: yes
